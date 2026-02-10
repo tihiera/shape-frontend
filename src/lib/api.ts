@@ -20,7 +20,7 @@ export async function login(email: string): Promise<{
   is_new: boolean;
   sessions: (string | SessionInfo)[];
 }> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+  const res = await fetch(`${API_BASE}/auth/login`, { 
     method: "POST",
     headers: { ...defaultHeaders, "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
