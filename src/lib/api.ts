@@ -2,6 +2,11 @@ const BACKEND = process.env.NEXT_PUBLIC_BACKEND || "";
 const API_BASE = BACKEND;
 const WS_BASE = BACKEND.replace(/^http/, "ws");
 
+/** Default headers for all API requests — includes ngrok bypass */
+const defaultHeaders: Record<string, string> = {
+  "ngrok-skip-browser-warning": "true",
+};
+
 /* ── Auth ── */
 
 export interface SessionInfo {
@@ -17,7 +22,7 @@ export async function login(email: string): Promise<{
 }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...defaultHeaders, "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
   if (!res.ok) throw new Error("Login failed");
@@ -36,7 +41,9 @@ export async function getMe(uid: string): Promise<{
   email: string;
   sessions: (string | SessionInfo)[];
 }> {
-  const res = await fetch(`${API_BASE}/auth/me?uid=${encodeURIComponent(uid)}`);
+  const res = await fetch(`${API_BASE}/auth/me?uid=${encodeURIComponent(uid)}`, {
+    headers: defaultHeaders,
+  });
   if (res.status === 404 || res.status === 401) throw new Error("Invalid session");
   if (!res.ok) throw new Error("Failed to verify session");
   return res.json();
@@ -64,6 +71,7 @@ export async function uploadMesh(uid: string, file: File): Promise<UploadRespons
 
   const res = await fetch(`${API_BASE}/upload`, {
     method: "POST",
+    headers: defaultHeaders,
     body: formData,
   });
   if (!res.ok) throw new Error("Upload failed");
@@ -79,15 +87,12 @@ export interface SurfaceMesh {
 
 export async function getSurfaceMesh(uid: string, sessionId: string): Promise<SurfaceMesh> {
   const url = `${API_BASE}/mesh/${uid}/${sessionId}`;
-  console.log("[API] getSurfaceMesh →", url);
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: defaultHeaders });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    console.error("[API] getSurfaceMesh failed:", res.status, res.statusText, text);
     throw new Error(`Failed to load surface mesh (${res.status})`);
   }
   const data = await res.json();
-  console.log("[API] getSurfaceMesh response keys:", Object.keys(data), "vertices:", data.vertices?.length, "faces:", data.faces?.length);
   return data;
 }
 
@@ -105,7 +110,7 @@ export interface ChatHistoryMessage {
  * Returns array of { role, content, timestamp? }
  */
 export async function getChatHistory(uid: string, sessionId: string): Promise<ChatHistoryMessage[]> {
-  const res = await fetch(`${API_BASE}/chat/${uid}/${sessionId}`);
+  const res = await fetch(`${API_BASE}/chat/${uid}/${sessionId}`, { headers: defaultHeaders });
   if (res.status === 404) return []; // no chat yet
   if (!res.ok) throw new Error("Failed to load chat history");
   return res.json();
@@ -119,7 +124,7 @@ export async function getChatHistory(uid: string, sessionId: string): Promise<Ch
  * Returns the same SegmentResult shape as the WS "result" message.
  */
 export async function getSegments(uid: string, sessionId: string): Promise<SegmentResult | null> {
-  const res = await fetch(`${API_BASE}/segments/${uid}/${sessionId}`);
+  const res = await fetch(`${API_BASE}/segments/${uid}/${sessionId}`, { headers: defaultHeaders });
   if (res.status === 404) return null; // not yet segmented
   if (!res.ok) throw new Error("Failed to load segments");
   return res.json();

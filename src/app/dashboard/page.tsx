@@ -158,7 +158,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (queryResult) {
-      console.log("[Dashboard] query result v" + queryResultVersion + ":", queryResult.answer?.slice(0, 80));
       setMessages((prev) => [...prev, { role: "assistant", text: queryResult.answer }]);
       if (queryResult.highlight_ids?.length) setHighlightIds(queryResult.highlight_ids);
       scrollToBottom();
