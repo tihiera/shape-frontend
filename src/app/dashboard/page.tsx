@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { uploadMesh, getChatHistory, getSegments } from "@/lib/api";
 import { useShapeSocket, type PipelinePhase } from "@/lib/useShapeSocket";
@@ -71,6 +72,7 @@ function segColorStyle(type: string) {
 
 export default function DashboardPage() {
   const { uid, email, sessions, loading, logout, addSession } = useAuth();
+  const router = useRouter();
 
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
@@ -196,7 +198,10 @@ export default function DashboardPage() {
       </div>
     );
   }
-  if (!uid) return null;
+  if (!uid) {
+    router.replace("/login");
+    return null;
+  }
 
   const hasSessions = sessions.length > 0;
   const processing = isProcessing(phase);

@@ -55,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!storedUid || !storedEmail) {
       setLoading(false);
-      router.replace("/login");
       return;
     }
 
@@ -65,10 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setEmail(data.email);
         setSessions((data.sessions || []).map(normalizeSessionId));
       })
-      .catch(() => {
-        localStorage.removeItem("uid");
-        localStorage.removeItem("email");
-        router.replace("/login");
+      .catch((err) => {
+        console.warn("[Auth] getMe failed:", err.message);
+        // Only clear credentials if it's a definitive auth failure (not a network error)
+        if (err.message === "Invalid session") {
+          localStorage.removeItem("uid");
+          localStorage.removeItem("email");
+        } else {
+          // Network error — keep credentials, use what we have from localStorage
+          setUid(storedUid);
+          setEmail(storedEmail);
+        }
       })
       .finally(() => setLoading(false));
   }, [router]);
