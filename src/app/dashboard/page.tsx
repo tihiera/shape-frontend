@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
-import { SEGMENT_COLORS, type MeshViewerHandle } from "@/components/MeshViewer";
+import { SEGMENT_COLORS, type MeshViewerHandle } from "@/components/meshConstants";
 
 const MeshViewer = dynamic(() => import("@/components/MeshViewer"), { ssr: false });
 
