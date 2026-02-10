@@ -78,9 +78,17 @@ export interface SurfaceMesh {
 }
 
 export async function getSurfaceMesh(uid: string, sessionId: string): Promise<SurfaceMesh> {
-  const res = await fetch(`${API_BASE}/mesh/${uid}/${sessionId}`);
-  if (!res.ok) throw new Error("Failed to load surface mesh");
-  return res.json();
+  const url = `${API_BASE}/mesh/${uid}/${sessionId}`;
+  console.log("[API] getSurfaceMesh →", url);
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error("[API] getSurfaceMesh failed:", res.status, res.statusText, text);
+    throw new Error(`Failed to load surface mesh (${res.status})`);
+  }
+  const data = await res.json();
+  console.log("[API] getSurfaceMesh response keys:", Object.keys(data), "vertices:", data.vertices?.length, "faces:", data.faces?.length);
+  return data;
 }
 
 /* ── Chat history ── */

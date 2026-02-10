@@ -152,11 +152,16 @@ const MeshViewer = forwardRef<MeshViewerHandle, MeshViewerProps>(function MeshVi
     getSurfaceMesh(uid, sessionId)
       .then((data) => {
         console.log("[MeshViewer] loaded:", data.vertices?.length, "verts,", data.faces?.length, "faces");
+        if (!data.vertices?.length || !data.faces?.length) {
+          console.warn("[MeshViewer] mesh data is empty or missing fields. Keys:", Object.keys(data));
+          setError("Mesh data is empty or has unexpected format.");
+          return;
+        }
         setSurfaceMesh(data);
       })
       .catch((err) => {
-        console.error("[MeshViewer] failed:", err);
-        setError("Could not load mesh.");
+        console.error("[MeshViewer] failed:", err.message || err);
+        setError(`Could not load mesh: ${err.message || "unknown error"}`);
       })
       .finally(() => setLoading(false));
   }, [uid, sessionId]);
