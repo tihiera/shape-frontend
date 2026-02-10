@@ -1,4 +1,4 @@
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND || "";
 const API_BASE = BACKEND;
 const WS_BASE = BACKEND.replace(/^http/, "ws");
 
