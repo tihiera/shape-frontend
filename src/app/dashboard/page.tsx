@@ -747,7 +747,7 @@ export default function DashboardPage() {
                     <Upload size={26} strokeWidth={1.8} className="text-black/30" />
                   </div>
                   <p className="text-[16px] font-bold text-black/50">Drop a mesh file or click to browse</p>
-                  <p className="mt-2 text-[13px] font-medium text-black/25">.msh &nbsp; .obj &nbsp; .stl &nbsp; .vtk &nbsp; .ply</p>
+                  <p className="mt-2 text-[13px] font-medium text-black/25">formats: .msh &nbsp;</p>
                 </>
               )}
             </div>
