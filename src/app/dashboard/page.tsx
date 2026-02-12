@@ -20,12 +20,26 @@ import {
   Minimize,
   RotateCcw,
   RotateCw,
+  Download,
+  FileBox,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import { SEGMENT_COLORS, type MeshViewerHandle } from "@/components/meshConstants";
 
 const MeshViewer = dynamic(() => import("@/components/MeshViewer"), { ssr: false });
+
+/* ── Sample meshes available in /public/meshes ── */
+
+const SAMPLE_MESHES = [
+  { name: "Simple Bend",     file: "simple_bend.msh",     desc: "A single smooth bend" },
+  { name: "S-Curve",         file: "s_curve.msh",         desc: "S-shaped pipe curve" },
+  { name: "U-Bend",          file: "u_bend.msh",          desc: "U-shaped return bend" },
+  { name: "T-Junction",      file: "t_junction.msh",      desc: "Three-way junction" },
+  { name: "Complex Network", file: "complex_network.msh", desc: "Multi-branch pipe network" },
+];
 
 /* ── Chat message types ── */
 
@@ -96,6 +110,9 @@ export default function DashboardPage() {
   // Smooth transition: wait a frame after session change before showing content
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(false);
+
+  // Sample meshes floating panel
+  const [showSamplePanel, setShowSamplePanel] = useState(true);
 
   // Viewer controls
   const [meshOpacity, setMeshOpacity] = useState(0.4);
@@ -260,6 +277,19 @@ export default function DashboardPage() {
     setModalFile(null);
     setModalPrompt("");
     setModalError("");
+  }
+
+  /** Load a sample mesh from /public/meshes/ and set it as the modal file */
+  async function handlePickSample(sample: typeof SAMPLE_MESHES[number]) {
+    try {
+      const res = await fetch(`/meshes/${sample.file}`);
+      const blob = await res.blob();
+      const file = new File([blob], sample.file, { type: "application/octet-stream" });
+      setModalFile(file);
+      if (!showNewModal) setShowNewModal(true);
+    } catch {
+      console.error("Failed to load sample mesh");
+    }
   }
 
   async function handleSelectSession(sid: string) {
@@ -611,9 +641,77 @@ export default function DashboardPage() {
         </aside>
       </div>
 
+      {/* ── Floating Sample Meshes Panel (bottom-left) ── */}
+      <div className="fixed bottom-5 left-4 z-40 w-62 animate-float-in">
+        <div className="overflow-hidden rounded-2xl border border-black/8 bg-white/95 shadow-lg backdrop-blur-md">
+          {/* Header — always visible, acts as toggle */}
+          <button
+            onClick={() => setShowSamplePanel((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-black/3"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/5">
+                <FileBox size={14} strokeWidth={2} className="text-black/45" />
+              </div>
+              <span className="text-[13px] font-bold text-black/60">Sample Meshes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-bold text-black/35">
+                {SAMPLE_MESHES.length}
+              </span>
+              {showSamplePanel ? (
+                <ChevronDown size={14} className="text-black/30" />
+              ) : (
+                <ChevronUp size={14} className="text-black/30" />
+              )}
+            </div>
+          </button>
+
+          {/* Expandable list */}
+          {showSamplePanel && (
+            <div className="border-t border-black/6 px-2 py-2">
+              {SAMPLE_MESHES.map((sample) => (
+                <div
+                  key={sample.file}
+                  className="group flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-black/4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold text-black/65 group-hover:text-black/80">
+                      {sample.name}
+                    </p>
+                    <p className="truncate text-[11px] font-medium text-black/30">
+                      {sample.desc}
+                    </p>
+                  </div>
+                  <div className="ml-2 flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => handlePickSample(sample)}
+                      title="Use this mesh"
+                      className="flex h-7 items-center gap-1.5 rounded-lg bg-black/5 px-2.5 text-[11px] font-bold text-black/45 opacity-0 transition-all hover:bg-black/10 hover:text-black/70 group-hover:opacity-100"
+                    >
+                      <Upload size={12} strokeWidth={2.5} />
+                      Use
+                    </button>
+                    <a
+                      href={`/meshes/${sample.file}`}
+                      download={sample.file}
+                      title="Download"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/25 opacity-0 transition-all hover:bg-black/5 hover:text-black/50 group-hover:opacity-100"
+                    >
+                      <Download size={13} strokeWidth={2} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── New Exploration Modal ── */}
       {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/1 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-3xl border border-black/10 bg-[#FDFDFB] p-10 shadow-2xl">
             <div className="mb-8 flex items-center justify-between">
               <div>
@@ -652,6 +750,41 @@ export default function DashboardPage() {
                   <p className="mt-2 text-[13px] font-medium text-black/25">.msh &nbsp; .obj &nbsp; .stl &nbsp; .vtk &nbsp; .ply</p>
                 </>
               )}
+            </div>
+
+            {/* ── Or pick a sample ── */}
+            <div className="mb-8">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="h-px flex-1 bg-black/8" />
+                <span className="text-[12px] font-bold tracking-wide text-black/30 uppercase">or try a sample</span>
+                <div className="h-px flex-1 bg-black/8" />
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {SAMPLE_MESHES.map((sample) => (
+                  <button
+                    key={sample.file}
+                    onClick={(e) => { e.stopPropagation(); handlePickSample(sample); }}
+                    className={`group flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 transition-all ${
+                      modalFile?.name === sample.file
+                        ? "border-black/20 bg-black/5"
+                        : "border-black/8 hover:border-black/18 hover:bg-black/3"
+                    }`}
+                  >
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                      modalFile?.name === sample.file ? "bg-black/10" : "bg-black/4 group-hover:bg-black/7"
+                    }`}>
+                      <FileBox size={16} strokeWidth={1.8} className={`transition-colors ${
+                        modalFile?.name === sample.file ? "text-black/60" : "text-black/30 group-hover:text-black/45"
+                      }`} />
+                    </div>
+                    <span className={`text-center text-[11px] font-semibold leading-tight transition-colors ${
+                      modalFile?.name === sample.file ? "text-black/70" : "text-black/40 group-hover:text-black/60"
+                    }`}>
+                      {sample.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <label className="mb-2 block text-[13px] font-bold tracking-wide text-black/45 uppercase">
